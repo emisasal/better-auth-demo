@@ -1,39 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { signInAction } from "@/app/actions/sign-in"
 
 export default function SignInPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setLoading(true)
     setError(null)
-
-    try {
-      const res = await fetch("/api/auth/sign-in/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.message || "Unable to sign in")
+    startTransition(async () => {
+      try {
+        await signInAction({ email, password })
+        router.push("/")
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong")
       }
-
-      router.push("/")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -82,10 +72,10 @@ export default function SignInPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={pending}
           className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {pending ? "Signing in…" : "Sign in"}
         </button>
       </form>
     </main>

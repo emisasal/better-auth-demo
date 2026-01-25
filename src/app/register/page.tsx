@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { signUpAction } from "@/app/actions/sign-up"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -10,51 +11,41 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [name, setName] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setLoading(true)
     setError(null)
 
     // Validation
     if (!name.trim()) {
       setError("Name is required")
-      setLoading(false)
+      // no-op
       return
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
-      setLoading(false)
+      // no-op
       return
     }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters")
-      setLoading(false)
+      // no-op
       return
     }
 
-    try {
-      const res = await fetch("/api/auth/sign-up/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.message || "Unable to register")
+    startTransition(async () => {
+      try {
+        await signUpAction({ email, password, name })
+        router.push("/")
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong")
       }
-
-      router.push("/")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -132,10 +123,10 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={pending}
           className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {loading ? "Creating account…" : "Create account"}
+          {pending ? "Creating account…" : "Create account"}
         </button>
       </form>
     </main>

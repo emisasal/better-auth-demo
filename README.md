@@ -21,6 +21,7 @@ This project demonstrates a complete authentication system featuring:
 - ✅ Email/password authentication with form validation
 - ✅ User registration and sign-in flows
 - ✅ Session management with secure HTTP-only cookies
+- ✅ Server-action sign-out (no extra client fetch)
 - ✅ Protected (private) and public route examples
 - ✅ Type-safe database operations with Prisma ORM
 - ✅ SQLite database (easily migrate to PostgreSQL/MySQL)
@@ -228,16 +229,15 @@ Located in [src/lib/auth.ts](src/lib/auth.ts):
 - SQLite provider configuration
 - Next.js cookie plugin for session management
 
-### API Endpoints
+### Auth Flows
 
-Generated automatically at `/api/auth/*`:
+This project uses server actions for core auth flows:
 
-| Endpoint                  | Method | Purpose                          |
-| ------------------------- | ------ | -------------------------------- |
-| `/api/auth/sign-up`       | POST   | Register a new user              |
-| `/api/auth/sign-in/email` | POST   | Authenticate with email/password |
-| `/api/auth/sign-out`      | POST   | Logout user                      |
-| `/api/auth/session`       | GET    | Get current session              |
+- **Sign In**: [src/app/actions/sign-in.ts](src/app/actions/sign-in.ts)
+- **Sign Up**: [src/app/actions/sign-up.ts](src/app/actions/sign-up.ts)
+- **Sign Out**: [src/app/actions/sign-out.ts](src/app/actions/sign-out.ts)
+
+Server actions run on the server and interact with Better Auth directly, so cookies are set/cleared in the same request without extra client fetches. The Better Auth API route handler at [src/app/api/auth/[...all]/route.ts](src/app/api/auth/%5B...all%5D/route.ts) still exists for compatibility.
 
 ### Client Integration
 
@@ -252,6 +252,97 @@ export function LoginForm() {
   // authClient.signUp()
   // authClient.signOut()
   // authClient.useSession() - Hook for session data
+}
+```
+
+### Server Action Examples
+
+**Sign In (Email/Password):**
+
+```tsx
+import { useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { signInAction } from "@/app/actions/sign-in"
+
+function SignInForm({ email, password }: { email: string; password: string }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const onSubmit = () => {
+    startTransition(async () => {
+      await signInAction({ email, password })
+      router.push("/")
+      router.refresh()
+    })
+  }
+
+  return (
+    <button onClick={onSubmit} disabled={pending}>
+      Sign in
+    </button>
+  )
+}
+```
+
+**Sign Up (Email/Password + Name):**
+
+```tsx
+import { useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { signUpAction } from "@/app/actions/sign-up"
+
+function RegisterForm({
+  name,
+  email,
+  password,
+}: {
+  name: string
+  email: string
+  password: string
+}) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const onSubmit = () => {
+    startTransition(async () => {
+      await signUpAction({ name, email, password })
+      router.push("/")
+      router.refresh()
+    })
+  }
+
+  return (
+    <button onClick={onSubmit} disabled={pending}>
+      Create account
+    </button>
+  )
+}
+```
+
+**Sign Out:**
+
+```tsx
+import { useTransition } from "react"
+import { useRouter } from "next/navigation"
+import { signOutAction } from "@/app/actions/sign-out"
+
+function SignOutButton() {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  const onClick = () => {
+    startTransition(async () => {
+      await signOutAction()
+      router.replace("/sign-in")
+      router.refresh()
+    })
+  }
+
+  return (
+    <button onClick={onClick} disabled={pending}>
+      Sign out
+    </button>
+  )
 }
 ```
 
@@ -552,7 +643,6 @@ MIT License - feel free to use this project for personal and commercial purposes
 
 ## ToDo:
 
-- Add Sign Out button in the Home page
 - Add Google strategy to the auth configuration
 - Add email verification flow
 - Add password reset flow
