@@ -118,6 +118,7 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 | Home         | `/`             | Protected | Welcome page (redirects to sign-in if not authenticated) |
 | Sign In      | `/sign-in`      | Public    | Email/password login form                                |
 | Register     | `/register`     | Public    | New user registration form                               |
+| Verify Email | `/verify-email` | Public    | Email verification callback handler                      |
 | Public Page  | `/public-page`  | Public    | Example public page                                      |
 | Private Page | `/private-page` | Protected | Example protected page                                   |
 | API Routes   | `/api/auth/*`   | API       | Better Auth endpoints                                    |
@@ -362,6 +363,93 @@ User Redirected to Home
 Session Retrieved from Cookie on Protected Pages
 ```
 
+## ✉️ Email Verification
+
+- Configured in [src/lib/auth.ts](src/lib/auth.ts): require verification, auto-send on sign-up/sign-in, 1-hour expiry, and auto sign-in after verification.
+- Verify handler: [src/app/verify-email/page.tsx](src/app/verify-email/page.tsx) calls `auth.api.verifyEmail(...)` and redirects to `callbackURL`.
+- Resend action: [src/app/actions/resend-verification.ts](src/app/actions/resend-verification.ts) invokes `auth.api.sendVerificationEmail(...)`.
+
+### Configuration
+
+```ts
+// src/lib/auth.ts (excerpt)
+export const auth = betterAuth({
+  emailAndPassword: {
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ url, user, token }) => {
+      // Replace with your email provider in production
+      console.log("Send verification email:", { to: user.email, url, token })
+    },
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    expiresIn: 60 * 60, // 1 hour
+    autoSignInAfterVerification: true,
+  },
+})
+```
+
+### Flow
+
+```
+Sign Up / Sign In
+    ↓
+If not verified and sending enabled
+    ↓
+Email sent with link: /verify-email?token=...&callbackURL=/
+    ↓
+User opens link → token verified
+    ↓
+(auto) Signed in and redirected to callbackURL
+```
+
+### Resend Example
+
+```tsx
+// src/app/actions/resend-verification.ts
+"use server"
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
+
+export async function sendVerificationEmailAction(input: {
+  email: string
+  callbackURL?: string
+}) {
+  const { email, callbackURL } = input
+  await auth.api.sendVerificationEmail({
+    body: { email, callbackURL },
+    headers: await headers(),
+  })
+  return { success: true }
+}
+```
+
+```tsx
+// Minimal client usage
+import { useTransition } from "react"
+import { sendVerificationEmailAction } from "@/app/actions/resend-verification"
+
+export function ResendVerification({ email }: { email: string }) {
+  const [pending, startTransition] = useTransition()
+  return (
+    <button
+      disabled={pending}
+      onClick={() =>
+        startTransition(() =>
+          sendVerificationEmailAction({ email, callbackURL: "/" }),
+        )
+      }
+    >
+      {pending ? "Sending…" : "Resend verification"}
+    </button>
+  )
+}
+```
+
+- In production, integrate a real email provider in `sendVerificationEmail`.
+- Customize `callbackURL` to control where users land after verification.
+
 ## 🚀 Development
 
 ### Available Commands
@@ -452,7 +540,7 @@ To add OAuth providers (GitHub, Google, etc.):
    })
    ```
 
-2. Add environment variables to `.env.local`:
+2. Add environment variables to `.env`:
 
    ```env
    GITHUB_CLIENT_ID=your_client_id
@@ -588,7 +676,7 @@ pnpm start
 **Solution**:
 
 ```bash
-# Check DATABASE_URL in .env.local
+# Check DATABASE_URL in .env
 # Recreate database:
 rm prisma/dev.db
 pnpm prisma migrate dev --name init
@@ -597,7 +685,7 @@ pnpm prisma migrate dev --name init
 ### Session Not Persisting
 
 **Problem**: User logged out after page refresh
-**Solution**: Check that cookies are enabled and `BETTER_AUTH_URL` matches your app URL in `.env.local`
+**Solution**: Check that cookies are enabled and `BETTER_AUTH_URL` matches your app URL in `.env`
 
 ### TypeScript Errors in Generated Types
 
@@ -625,16 +713,6 @@ pnpm prisma migrate resolve --rolled-back 20250125024529_init
 pnpm dev -- -p 3001  # Use different port
 ```
 
-## 🤝 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -m "Add your feature"`
-4. Push to branch: `git push origin feature/your-feature`
-5. Open a Pull Request
-
 ## 📄 License
 
 MIT License - feel free to use this project for personal and commercial purposes.
@@ -644,7 +722,6 @@ MIT License - feel free to use this project for personal and commercial purposes
 ## ToDo:
 
 - Add Google strategy to the auth configuration
-- Add email verification flow
 - Add password reset flow
 - Add Two-Factor Authentication (2FA) example
 - Add Passkey authentication example
