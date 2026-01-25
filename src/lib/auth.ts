@@ -8,6 +8,7 @@ export const auth = betterAuth({
     provider: "sqlite", // or "mysql", "postgresql", ...etc
   }),
   plugins: [nextCookies()],
+  advanced: { cookiePrefix: "app_name" }, // To change the default cookie names
 
   emailAndPassword: {
     enabled: true,

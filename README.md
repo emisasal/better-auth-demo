@@ -21,6 +21,7 @@ This project demonstrates a complete authentication system featuring:
 - ✅ Email/password authentication with form validation
 - ✅ User registration and sign-in flows
 - ✅ Session management with secure HTTP-only cookies
+- ✅ Server-action sign-out (no extra client fetch)
 - ✅ Protected (private) and public route examples
 - ✅ Type-safe database operations with Prisma ORM
 - ✅ SQLite database (easily migrate to PostgreSQL/MySQL)
@@ -252,6 +253,29 @@ export function LoginForm() {
   // authClient.signUp()
   // authClient.signOut()
   // authClient.useSession() - Hook for session data
+}
+```
+
+### Server Actions
+
+- Sign out uses a server action at [src/app/actions/sign-out.ts](src/app/actions/sign-out.ts) so the session cookie is cleared server-side without an extra REST call.
+
+Example usage:
+
+```tsx
+import { signOutAction } from "@/app/actions/sign-out"
+import { useRouter } from "next/navigation"
+
+export function SignOutButton() {
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOutAction()
+    router.replace("/sign-in")
+    router.refresh()
+  }
+
+  return <button onClick={handleSignOut}>Sign out</button>
 }
 ```
 
@@ -552,7 +576,6 @@ MIT License - feel free to use this project for personal and commercial purposes
 
 ## ToDo:
 
-- Add Sign Out button in the Home page
 - Add Google strategy to the auth configuration
 - Add email verification flow
 - Add password reset flow
