@@ -1,191 +1,349 @@
 # Better Auth Demo
 
-A modern authentication demonstration project built with [Next.js](https://nextjs.org), [Better Auth](https://www.better-auth.com), [Prisma](https://www.prisma.io), and [SQLite](https://www.sqlite.org).
+A production-ready authentication demonstration project built with [Next.js](https://nextjs.org), [Better Auth](https://www.better-auth.com), [Prisma](https://www.prisma.io), and [SQLite](https://www.sqlite.org).
 
-## Project Overview
+This project showcases best practices for implementing secure authentication in modern web applications, complete with session management, protected routes, and type-safe database operations.
 
-This project showcases a complete authentication system with:
+## 🎯 Quick Links
 
-- User registration and email/password authentication
-- Session management
-- Protected and public routes
-- User profile management
-- Email verification support
-- Built-in database with Prisma ORM
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Available Pages & Routes](#available-pages--routes)
+- [Development](#development)
+- [Deployment](#deployment)
 
-## Tech Stack
+## 📋 Project Overview
 
-- **Framework**: Next.js 16 with React 19
-- **Authentication**: Better Auth
-- **Database**: SQLite with Prisma ORM
-- **Styling**: Tailwind CSS
-- **Language**: TypeScript
-- **Package Manager**: pnpm
+This project demonstrates a complete authentication system featuring:
 
-## Prerequisites
+- ✅ Email/password authentication with form validation
+- ✅ User registration and sign-in flows
+- ✅ Session management with secure HTTP-only cookies
+- ✅ Protected (private) and public route examples
+- ✅ Type-safe database operations with Prisma ORM
+- ✅ SQLite database (easily migrate to PostgreSQL/MySQL)
+- ✅ Modern UI built with Tailwind CSS
+- ✅ Full TypeScript support for type safety
+- ✅ OAuth-ready architecture for social providers
+- ✅ Email verification support (ready to extend)
 
-Before you begin, ensure you have the following installed:
+## 🛠 Tech Stack
+
+| Layer               | Technology                  | Version |
+| ------------------- | --------------------------- | ------- |
+| **Framework**       | Next.js                     | 16.1.4  |
+| **Runtime**         | React                       | 19.2.3  |
+| **Authentication**  | Better Auth                 | 1.4.17  |
+| **Database**        | SQLite (with Prisma ORM)    | -       |
+| **Styling**         | Tailwind CSS                | 4       |
+| **Language**        | TypeScript                  | 5       |
+| **Package Manager** | pnpm                        | 8+      |
+| **Node.js**         | >= 20.19 or 22.12+ or 24.0+ | -       |
+
+## ⚡ Quick Start
+
+### Prerequisites
+
+Ensure you have the following installed:
 
 - **Node.js** >= 20.19 (or v22.12+, v24.0+)
-- **pnpm** >= 8.x (or npm/yarn as alternatives)
+- **pnpm** >= 8.x
 - **Git**
 
-SQLite is bundled with this project, so no additional database setup is required.
+> **Note**: SQLite is bundled with this project—no separate database installation needed.
 
-## Installation
+### 1️⃣ Clone & Install
 
-1. **Clone the repository**:
+```bash
+# Clone the repository
+git clone <repository-url>
+cd better-auth-demo
 
-   ```bash
-   git clone <repository-url>
-   cd better-auth-demo
-   ```
+# Install dependencies
+pnpm install
+```
 
-2. **Install dependencies**:
+### 2️⃣ Environment Setup
 
-   ```bash
-   pnpm install
-   ```
+Create a `.env` file in the root directory:
 
-   This installs all required packages including:
-   - `prisma` - Prisma CLI for database management
-   - `@prisma/client` - Type-safe database query client
-   - `@prisma/adapter-better-sqlite3` - SQLite adapter for Prisma
-   - `better-sqlite3` - High-performance SQLite driver
-   - `dotenv` - Environment variable loader
+```env
+# Database Configuration
+DATABASE_URL="file:./dev.db"
 
-3. **Set up environment variables**:
+# Better Auth Configuration
+BETTER_AUTH_SECRET="<your-generated-secret>"  # Generate: openssl rand -base64 32
+BETTER_AUTH_URL="http://localhost:3000"       # Your app's base URL
+```
 
-   Create a `.env.local` file in the root directory with the following variables:
+**Generate a secure secret:**
 
-   ```env
-   # Database - SQLite uses a local file
-   DATABASE_URL="file:./prisma/dev.db"
+```bash
+openssl rand -base64 32
+```
 
-   # Better Auth Configuration
-   BETTER_AUTH_SECRET="<generate-a-32-character-secret>" # Use openssl rand -base64 32
-   BETTER_AUTH_URL="http://localhost:3000"                # Your app's base URL
-   ```
+Copy the output and paste it as `BETTER_AUTH_SECRET`.
 
-   **Generating BETTER_AUTH_SECRET**:
+### 3️⃣ Initialize Database
 
-   ```bash
-   openssl rand -base64 32
-   ```
+```bash
+# Generate Prisma Client
+pnpm prisma generate
 
-   The secret should be at least 32 characters and generated with high entropy for security.
+# Run migrations
+pnpm prisma migrate dev --name init
+```
 
-4. **Generate Prisma Client**:
+This will:
 
-   ```bash
-   pnpm dlx prisma generate
-   ```
+- Create the SQLite database file
+- Apply all pending migrations
+- Generate type-safe Prisma Client
 
-   This generates the type-safe Prisma Client based on your schema.
+### 4️⃣ Start Development Server
 
-5. **Initialize the database**:
+```bash
+pnpm dev
+```
 
-   ```bash
-   pnpm dlx prisma migrate dev --name init
-   ```
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-   This command will:
-   - Create the SQLite database file at `prisma/dev.db`
-   - Run all pending migrations
-   - Generate the Prisma Client for type-safe queries
+## 📍 Available Pages & Routes
 
-   If migrations have already been applied, you can sync your database schema with:
+| Page         | URL             | Type      | Description                                              |
+| ------------ | --------------- | --------- | -------------------------------------------------------- |
+| Home         | `/`             | Protected | Welcome page (redirects to sign-in if not authenticated) |
+| Sign In      | `/sign-in`      | Public    | Email/password login form                                |
+| Register     | `/register`     | Public    | New user registration form                               |
+| Public Page  | `/public-page`  | Public    | Example public page                                      |
+| Private Page | `/private-page` | Protected | Example protected page                                   |
+| API Routes   | `/api/auth/*`   | API       | Better Auth endpoints                                    |
 
-   ```bash
-   pnpm dlx prisma db push
-   ```
-
-## Available Scripts
-
-- `pnpm dev` - Start the development server (http://localhost:3000)
-- `pnpm build` - Build the application for production
-- `pnpm start` - Start the production server
-- `pnpm lint` - Run ESLint to check code quality
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
 ├── app/
-│   ├── api/auth/[...all]/     # Authentication API routes
-│   ├── sign-in/               # Sign in page
-│   ├── register/              # Registration page
-│   ├── private-page/          # Protected page example
-│   ├── public-page/           # Public page example
-│   └── layout.tsx             # Root layout
+│   ├── api/
+│   │   └── auth/[...all]/
+│   │       └── route.ts              # Better Auth API handler
+│   ├── sign-in/
+│   │   └── page.tsx                  # Sign in form
+│   ├── register/
+│   │   └── page.tsx                  # Registration form
+│   ├── private-page/
+│   │   └── page.tsx                  # Protected page example
+│   ├── public-page/
+│   │   └── page.tsx                  # Public page example
+│   ├── layout.tsx                    # Root layout component
+│   ├── page.tsx                      # Home page
+│   └── globals.css                   # Global styles
 ├── lib/
-│   ├── auth.ts               # Better Auth configuration
-│   ├── auth-client.ts        # Client-side auth helpers
-│   └── prisma.ts             # Prisma client instance
-└── globals.css               # Global styles
+│   ├── auth.ts                       # Better Auth server config
+│   ├── auth-client.ts                # Client-side auth helpers
+│   └── prisma.ts                     # Prisma client instance
+└── ...
 
 prisma/
-├── schema.prisma             # Database schema
-└── migrations/               # Database migrations
+├── schema.prisma                     # Database schema definition
+├── prisma.config.ts                  # Prisma configuration
+└── migrations/                       # Database migration history
+
+public/                               # Static assets
 ```
 
-## Database Schema
+## 🗄️ Database Schema
 
-The project includes the following models:
+The project includes four main models:
 
-- **User**: Stores user information (name, email, image, etc.)
-- **Session**: Manages user sessions with expiration and metadata
-- **Account**: OAuth provider accounts linked to users
-- **Verification**: Email verification tokens and purposes
+### User
 
-## Getting Started
+Stores user account information:
 
-1. Start the development server:
+```prisma
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String    @unique
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+```
 
-   ```bash
-   pnpm dev
-   ```
+### Session
 
-2. Open [http://localhost:3000](http://localhost:3000) in your browser
+Manages user sessions with expiration:
 
-3. Navigate to the sign-up page to create a new account
+```prisma
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  token     String    @unique
+  createdAt DateTime  @default(now())
+}
+```
 
-4. After authentication, you can access protected pages
+### Account
 
-## Key Features
+Stores OAuth provider connections:
 
-- ✅ Email and password authentication with validation
-- ✅ Session management with secure cookies
-- ✅ Protected and public routes
-- ✅ User registration and sign-in flows
-- ✅ Email verification support
-- ✅ OAuth-ready architecture (extensible to social providers)
-- ✅ SQLite database with Prisma ORM
-- ✅ Type-safe authentication with TypeScript
-- ✅ Modern UI with Tailwind CSS
+```prisma
+model Account {
+  id       String    @id @default(cuid())
+  userId   String
+  provider String
+  providerAccountId String
+}
+```
 
-## Authentication Architecture
+### Verification
 
-This project uses **Better Auth** for authentication management with the following components:
+Manages email verification tokens:
 
-- **Server-side Auth** (`src/lib/auth.ts`): Core authentication instance configured with Prisma adapter
-- **API Routes** (`src/app/api/auth/[...all]/route.ts`): Next.js handler for authentication endpoints
-- **Client-side Auth** (`src/lib/auth-client.ts`): React client for authentication operations
-- **Database Layer**: Prisma ORM with SQLite storing users, sessions, and account data
+```prisma
+model Verification {
+  id       String    @id @default(cuid())
+  identifier String
+  token    String    @unique
+  expires  DateTime
+}
+```
 
-### How Authentication Works
+See [prisma/schema.prisma](prisma/schema.prisma) for the complete schema.
 
-1. **User Registration/Sign-in**: Form submits to `/api/auth/*` endpoints
-2. **Better Auth Processing**: Validates credentials and manages sessions
-3. **Session Storage**: Secure HTTP-only cookies store session data
-4. **Protected Routes**: Client checks session status before rendering protected pages
-5. **Type Safety**: TypeScript ensures type-safe auth operations throughout the app
+## 🔐 Authentication Architecture
+
+Better Auth handles all authentication logic with these key components:
+
+### Server Configuration
+
+Located in [src/lib/auth.ts](src/lib/auth.ts):
+
+- Core Better Auth instance with Prisma adapter
+- Email/password authentication enabled
+- SQLite provider configuration
+- Next.js cookie plugin for session management
+
+### API Endpoints
+
+Generated automatically at `/api/auth/*`:
+
+| Endpoint                  | Method | Purpose                          |
+| ------------------------- | ------ | -------------------------------- |
+| `/api/auth/sign-up`       | POST   | Register a new user              |
+| `/api/auth/sign-in/email` | POST   | Authenticate with email/password |
+| `/api/auth/sign-out`      | POST   | Logout user                      |
+| `/api/auth/session`       | GET    | Get current session              |
+
+### Client Integration
+
+Use [src/lib/auth-client.ts](src/lib/auth-client.ts) in React components:
+
+```typescript
+import { authClient } from "@/lib/auth-client"
+
+export function LoginForm() {
+  // Available methods:
+  // authClient.signIn()
+  // authClient.signUp()
+  // authClient.signOut()
+  // authClient.useSession() - Hook for session data
+}
+```
+
+### Session Flow
+
+```
+User Submits Form
+    ↓
+POST /api/auth/sign-in/email
+    ↓
+Better Auth Validates Credentials
+    ↓
+Create Session + HTTP-Only Cookie
+    ↓
+User Redirected to Home
+    ↓
+Session Retrieved from Cookie on Protected Pages
+```
+
+## 🚀 Development
+
+### Available Commands
+
+```bash
+# Development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
+
+# Run linter
+pnpm lint
+```
+
+### Useful Prisma Commands
+
+**View Database with Prisma Studio:**
+
+```bash
+pnpm prisma studio
+```
+
+Opens [http://localhost:5555](http://localhost:5555) with a visual database editor.
+
+**Create a New Migration:**
+
+```bash
+pnpm prisma migrate dev --name <description>
+```
+
+Example: `pnpm prisma migrate dev --name add_user_phone_field`
+
+**Sync Schema to Database (without migrations):**
+
+```bash
+pnpm prisma db push
+```
+
+Use for rapid prototyping only—production requires migrations.
+
+**Reset Database (Development Only):**
+
+```bash
+pnpm prisma migrate reset
+```
+
+⚠️ **Warning**: Deletes all data and resets migration history.
+
+**Regenerate Prisma Client:**
+
+```bash
+pnpm prisma generate
+```
+
+Run after manual schema edits or if types become out of sync.
+
+**Pull Existing Database Schema:**
+
+```bash
+pnpm prisma db pull
+```
+
+Use if you have an existing database to auto-generate schema.
 
 ### Extending Authentication
 
-To add new authentication methods (e.g., OAuth providers):
+To add OAuth providers (GitHub, Google, etc.):
 
-1. Update `src/lib/auth.ts` with new configuration:
+1. Update [src/lib/auth.ts](src/lib/auth.ts):
 
    ```typescript
    export const auth = betterAuth({
@@ -195,165 +353,208 @@ To add new authentication methods (e.g., OAuth providers):
          clientId: process.env.GITHUB_CLIENT_ID as string,
          clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
        },
+       google: {
+         clientId: process.env.GOOGLE_CLIENT_ID as string,
+         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+       },
      },
    })
    ```
 
-2. Add environment variables for your provider
-3. Update `.env.local` with provider credentials
+2. Add environment variables to `.env.local`:
 
-## Development Tips
-
-### Understanding Better Auth Flow
-
-1. **Generate Secret**:
-
-   ```bash
-   openssl rand -base64 32
+   ```env
+   GITHUB_CLIENT_ID=your_client_id
+   GITHUB_CLIENT_SECRET=your_client_secret
+   GOOGLE_CLIENT_ID=your_client_id
+   GOOGLE_CLIENT_SECRET=your_client_secret
    ```
 
-   Add this to `BETTER_AUTH_SECRET` in `.env.local`
+3. Reference [Better Auth OAuth Documentation](https://www.better-auth.com/docs/integrations/social-providers) for provider-specific setup.
 
-2. **API Endpoints**: Better Auth creates endpoints at `/api/auth/*`:
-   - `POST /api/auth/sign-up` - Register new users
-   - `POST /api/auth/sign-in` - Authenticate users
-   - `POST /api/auth/sign-out` - Logout users
-   - `GET /api/auth/session` - Get current session
+### Debugging
 
-3. **Client Integration**: Use the auth client in React components:
+**View Session Data:**
 
-   ```typescript
-   import { authClient } from "@/lib/auth-client"
+```typescript
+// In a Server Component
+const session = await auth.api.getSession({ headers: await headers() })
+console.log("Session:", session)
+```
 
-   export function LoginForm() {
-     const { signIn } = authClient
-     // Use signIn, signUp, useSession, etc.
+**Check API Responses:**
+Open browser DevTools → Network tab → Monitor `/api/auth/*` requests
+
+**Database Issues:**
+
+```bash
+# Check migration status
+pnpm prisma migrate status
+
+# View logs
+pnpm prisma generate --verbose
+```
+
+## 🚢 Deployment
+
+### Build for Production
+
+```bash
+pnpm build
+pnpm start
+```
+
+### Platform-Specific Guides
+
+#### **Vercel (Recommended for Next.js)**
+
+1. Push code to GitHub/GitLab
+2. Connect to [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard:
+   ```
+   DATABASE_URL=your_production_database
+   BETTER_AUTH_SECRET=your_production_secret
+   BETTER_AUTH_URL=https://yourdomain.com
+   ```
+4. Deploy automatically on push
+
+#### **Railway, Fly.io, or Self-Hosted**
+
+1. Build application: `pnpm build`
+2. Ensure production database is running (PostgreSQL/MySQL recommended)
+3. Run migrations: `pnpm prisma migrate deploy`
+4. Start server: `pnpm start`
+
+### Database Migration for Production
+
+**SQLite works for small projects.** For larger applications, migrate to PostgreSQL or MySQL:
+
+1. Update `prisma/schema.prisma` datasource:
+
+   ```prisma
+   datasource db {
+     provider = "postgresql"  // or "mysql"
+     url      = env("DATABASE_URL")
    }
    ```
 
-### Prisma Studio
+2. Set `DATABASE_URL` to your production database:
 
-View and manage your database records with a visual editor:
-
-```bash
-pnpm dlx prisma studio --config ./prisma.config.ts
-```
-
-This opens a web interface at `http://localhost:5555` where you can:
-
-- Browse all database tables and records
-- Create, update, and delete records
-- View relationships between tables
-
-### Database Migrations
-
-When you modify `prisma/schema.prisma`, create and apply a new migration:
-
-```bash
-pnpm dlx prisma migrate dev --name <descriptive-name>
-```
-
-This will:
-
-- Create a new SQL migration file in `prisma/migrations/`
-- Apply the migration to your development database
-- Regenerate the Prisma Client types
-
-Example:
-
-```bash
-pnpm dlx prisma migrate dev --name add_user_role_field
-```
-
-### Introspect Database
-
-If you have an existing database schema, regenerate your Prisma schema:
-
-```bash
-pnpm dlx prisma db pull
-```
-
-This reads your database and updates `prisma/schema.prisma` accordingly.
-
-### Sync Database Schema
-
-Push schema changes directly to the database (without migrations):
-
-```bash
-pnpm dlx prisma db push
-```
-
-Use this for rapid prototyping. For production, always use migrations.
-
-### Reset Database
-
-⚠️ **Warning**: This deletes all data and resets migrations (use only in development):
-
-```bash
-pnpm dlx prisma migrate reset
-```
-
-This will:
-
-- Drop the database
-- Create a new database
-- Apply all migrations from scratch
-
-### Generate Prisma Client
-
-Regenerate types after manual schema changes:
-
-```bash
-pnpm dlx prisma generate
-```
-
-## Deployment
-
-To deploy this application:
-
-1. Build the application:
-
-   ```bash
-   pnpm build
+   ```
+   postgresql://user:password@host:5432/dbname
    ```
 
-2. Start the production server:
+3. Create and apply migration:
    ```bash
-   pnpm start
+   pnpm prisma migrate dev --name switch_to_postgresql
    ```
 
-For production deployment, consider:
+### Security Checklist
 
-- **Database**: SQLite works well for small-to-medium applications. For larger apps, migrate to PostgreSQL or MySQL by updating `prisma/schema.prisma` and `DATABASE_URL` in your environment variables
-- **Environment Variables**: Set `DATABASE_URL` to your production database connection string
-- **Prisma Migrations**: Run `pnpm dlx prisma migrate deploy` in production to apply pending migrations
-- **CORS & Security**: Configure CORS headers and security policies for your domain
-- **Hosting**: Deploy to Vercel (Next.js optimized), Railway, Fly.io, or your preferred platform
+- [ ] Generate strong `BETTER_AUTH_SECRET` (32+ characters)
+- [ ] Set `BETTER_AUTH_URL` to your production domain
+- [ ] Use HTTPS in production
+- [ ] Enable CORS if using separate frontend domain
+- [ ] Keep dependencies updated: `pnpm update`
+- [ ] Monitor for security vulnerabilities: `pnpm audit`
+- [ ] Configure firewall/network policies for database access
+- [ ] Use managed database services (AWS RDS, Railway, etc.)
+- [ ] Enable database backups
+- [ ] Implement rate limiting on auth endpoints
+- [ ] Set up error monitoring (Sentry, LogRocket, etc.)
 
-## Understanding the Database Setup
+## 📚 Learning Resources
 
-This project uses Prisma as an ORM with SQLite:
+**Better Auth:**
 
-- **Prisma Configuration**: Located in `prisma.config.ts` and `prisma/schema.prisma`
-- **Database File**: SQLite stores data in `prisma/dev.db` (generated after first migration)
-- **Migrations**: Track schema changes in `prisma/migrations/`
-- **Type Safety**: Prisma generates TypeScript types from your schema automatically
-- **Adapter**: Uses `@prisma/adapter-better-sqlite3` for high-performance SQLite queries
+- [Official Documentation](https://www.better-auth.com/docs)
+- [Installation Guide](https://www.better-auth.com/docs/installation)
+- [Basic Usage](https://www.better-auth.com/docs/basic-usage)
+- [API Reference](https://www.better-auth.com/docs/api-reference)
 
-For detailed information, see the [Prisma SQLite guide](https://www.prisma.io/docs/orm/overview/databases/sqlite).
+**Next.js:**
 
-## Resources
-
-- [Better Auth Documentation](https://www.better-auth.com/docs)
-- [Better Auth Installation Guide](https://www.better-auth.com/docs/installation)
-- [Better Auth Basic Usage](https://www.better-auth.com/docs/basic-usage)
-- [Better Auth API Reference](https://www.better-auth.com/docs/api-reference)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma ORM Documentation](https://www.prisma.io/docs)
-- [Prisma SQLite Guide](https://www.prisma.io/docs/orm/overview/databases/sqlite)
-- [Prisma Migrate Documentation](https://www.prisma.io/docs/orm/prisma-migrate)
+- [API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+- [Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
+
+**Prisma:**
+
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [SQLite Guide](https://www.prisma.io/docs/orm/overview/databases/sqlite)
+- [Migrate Documentation](https://www.prisma.io/docs/orm/prisma-migrate)
+- [Query Documentation](https://www.prisma.io/docs/orm/prisma-client)
+
+**Styling:**
+
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
-## License
+## 💡 Common Issues & Solutions
 
-MIT
+### Database Connection Error
+
+**Problem**: `Could not connect to database`
+**Solution**:
+
+```bash
+# Check DATABASE_URL in .env.local
+# Recreate database:
+rm prisma/dev.db
+pnpm prisma migrate dev --name init
+```
+
+### Session Not Persisting
+
+**Problem**: User logged out after page refresh
+**Solution**: Check that cookies are enabled and `BETTER_AUTH_URL` matches your app URL in `.env.local`
+
+### TypeScript Errors in Generated Types
+
+**Problem**: `Type 'X' is not assignable to type 'Y'`
+**Solution**: Regenerate Prisma types:
+
+```bash
+pnpm prisma generate
+```
+
+### Migration Conflicts
+
+**Problem**: `The migration you are trying to resolve already exists`
+**Solution**:
+
+```bash
+pnpm prisma migrate resolve --rolled-back 20250125024529_init
+```
+
+### Port 3000 Already in Use
+
+**Solution**:
+
+```bash
+pnpm dev -- -p 3001  # Use different port
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit changes: `git commit -m "Add your feature"`
+4. Push to branch: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License - feel free to use this project for personal and commercial purposes.
+
+---
+
+## ToDo:
+
+- Add Sign Out button in the Home page
+- Add Google strategy to the auth configuration
+- Add email verification flow
+- Add password reset flow
+- Add Two-Factor Authentication (2FA) example
+- Add Passkey authentication example
